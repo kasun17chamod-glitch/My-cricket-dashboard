@@ -4,7 +4,7 @@ from utils.batting import batting_stats
 from utils.bowling import bowling_stats
 
 # Load data
-df = load_data("data/Cricket stats for dashboard.xlsx")
+df = load_data("data/cricket_stats.xlsx")
 
 st.title("🏏 My Cricket Dashboard")
 
