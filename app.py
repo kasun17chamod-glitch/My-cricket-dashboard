@@ -61,6 +61,28 @@ set_background()
 df = load_data("data/cricket_stats.xlsx")
 
 st.title("Cricket Stats 🏏")
+st.markdown("---")
+# ================= PROFILE HEADER =================
+col1, col2 = st.columns([3, 5])
+
+with col1:
+    st.image("assets/profile.jpg", width=180)
+
+with col2:
+    st.markdown("""
+    <div style="
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 180px;
+    ">
+        <h2 style='margin-bottom:0; color:#f1f5f9;'>Kasun Chamod</h2>
+        <p style='color:#38bdf8; margin-top:5px; font-size:16px;'>
+        Left-Arm Orthodox | Right-hand Bat
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+st.markdown("---")
 
 # ================= FILTERS =================
 st.sidebar.title("🏏 Filters")
@@ -111,6 +133,7 @@ with st.sidebar.container():
 
     # space after section
     st.markdown("<div style='margin-bottom:12px;'></div>", unsafe_allow_html=True)
+
 #OPPONENT FILTER
 
 with st.sidebar.container():
@@ -142,7 +165,7 @@ st.sidebar.markdown("---")
 if st.sidebar.button("🔄 Reset Filters"):
     st.experimental_rerun()
 
-# ================= BATTING =================
+
 # ================= BATTING =================
 with st.container():
 

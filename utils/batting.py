@@ -8,8 +8,8 @@ def batting_stats(df):
     matches = len(df)
     innings = len(batting_df)
 
-    total_runs = batting_df["Runs"].sum()
-    total_balls = batting_df["Balls"].sum()
+    total_runs = int(batting_df["Runs"].sum())
+    total_balls = int(batting_df["Balls"].sum())
 
     # Outs (only count when Out == "yes")
     outs = len(batting_df[batting_df["Out"].str.lower() == "yes"]) if "Out" in df.columns else 0
@@ -87,4 +87,3 @@ def batting_stats(df):
         "dismissals": dismissal_counts
     }
 
-# commit test
