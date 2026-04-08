@@ -4,14 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="778c50eb-afb0-49dc-aa95-19a6064cddb8" name="Changes" comment="update database">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/cricket_stats.xlsx" beforeDir="false" afterPath="$PROJECT_DIR$/data/cricket_stats.xlsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/batting.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/batting.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/bowling.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/bowling.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/loader.py" afterDir="false" />
-    </list>
+    <list default="true" id="778c50eb-afb0-49dc-aa95-19a6064cddb8" name="Changes" comment="Update batting and bowling" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -110,7 +103,15 @@
       <option name="project" value="LOCAL" />
       <updated>1775578091760</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Update batting and bowling">
+      <option name="closed" value="true" />
+      <created>1775624645969</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1775624645969</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -128,6 +129,7 @@
     <MESSAGE value="Initial cricket dashboard" />
     <MESSAGE value="added requirements.txt" />
     <MESSAGE value="update database" />
-    <option name="LAST_COMMIT_MESSAGE" value="update database" />
+    <MESSAGE value="Update batting and bowling" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update batting and bowling" />
   </component>
 </project>
