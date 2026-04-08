@@ -96,30 +96,46 @@ with st.sidebar.container():
         unsafe_allow_html=True
     )
 
-    # space below title
     st.markdown("<div style='margin-bottom:10px;'></div>", unsafe_allow_html=True)
-
-    select_all_types = st.checkbox("Select All Match Types", value=True)
-
-    # small gap after "select all"
-    st.markdown("<div style='margin-bottom:6px;'></div>", unsafe_allow_html=True)
 
     type_options = sorted(df["Match_Type"].dropna().unique())
     selected_types = []
 
     for t in type_options:
-        checked = st.checkbox(
-            str(t),
-            value=select_all_types,
-            key=f"type_{t}"
-        )
-        if checked:
+        if st.checkbox(str(t), value=True, key=f"type_{t}"):
             selected_types.append(t)
 
     df = df[df["Match_Type"].isin(selected_types)]
 
+    st.markdown("<div style='margin-bottom:12px;'></div>", unsafe_allow_html=True)
+
     # space after section
     st.markdown("<div style='margin-bottom:12px;'></div>", unsafe_allow_html=True)
+#OPPONENT FILTER
+
+with st.sidebar.container():
+
+    st.markdown(
+        "<div style='font-size:18px; font-weight:600; color:#34d399;'>🏟️ Opponent</div>",
+        unsafe_allow_html=True
+    )
+
+    st.markdown("<div style='margin-bottom:10px;'></div>", unsafe_allow_html=True)
+
+    if "Opponent" in df.columns:
+
+        opponent_options = sorted(df["Opponent"].dropna().unique())
+
+        selected_opponents = st.multiselect(
+            "Search opponent (leave empty for all)",
+            options=opponent_options,
+            default=[],   # 🔥 KEY CHANGE
+            help="Type team name to filter. Leave empty to see all matches."
+        )
+
+        # 🔥 APPLY FILTER ONLY IF USER SELECTS
+        if selected_opponents:
+            df = df[df["Opponent"].isin(selected_opponents)]
 
 # --- RESET BUTTON ---
 st.sidebar.markdown("---")
