@@ -165,50 +165,236 @@ col3.metric("100s", bat["100s"])
 col1.metric("30+", bat["30s"])
 col2.metric("Catches", bat["catches"])
 
-#DISMISSALS
-st.markdown("### Dismissals")
+# ================= BATTING DETAILS =================
+with st.expander("⬇️ View Best Batting Match Details", expanded=False):
 
+    batting_df = df[df["Runs"].notna()].copy()
+
+    if not batting_df.empty:
+
+        # -----------------------------
+        # 🔥 HIGHEST SCORE MATCH
+        # -----------------------------
+        st.markdown("### 🏆 Highest Score Match")
+
+        max_runs = batting_df["Runs"].max()
+        highest_df = batting_df[batting_df["Runs"] == max_runs]
+
+        st.dataframe(
+            highest_df[["Year", "Match_Type", "Opponent", "Runs", "Balls", "Dismissal"]],
+            use_container_width=True,
+            hide_index=True
+        )
+
+        st.markdown("---")
+
+        # -----------------------------
+        # 🔥 100s
+        # -----------------------------
+        st.markdown("### 💯 Hundreds")
+
+        hundreds_df = batting_df[batting_df["Runs"] >= 100]
+
+        if not hundreds_df.empty:
+            st.dataframe(
+                hundreds_df[["Year", "Match_Type", "Opponent", "Runs", "Balls", "Dismissal"]],
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.write("No hundreds")
+
+        st.markdown("---")
+
+        # -----------------------------
+        # 🔥 50s
+        # -----------------------------
+        st.markdown("### 🔥 Fifties")
+
+        fifties_df = batting_df[
+            (batting_df["Runs"] >= 50) & (batting_df["Runs"] < 100)
+        ]
+
+        if not fifties_df.empty:
+            st.dataframe(
+                fifties_df[["Year", "Match_Type", "Opponent", "Runs", "Balls", "Dismissal"]],
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.write("No fifties")
+
+        st.markdown("---")
+
+        # -----------------------------
+        # 🔥 30+
+        # -----------------------------
+        st.markdown("### 📈 30+ Scores")
+
+        thirty_df = batting_df[
+            (batting_df["Runs"] >= 30) & (batting_df["Runs"] < 50)
+        ]
+
+        if not thirty_df.empty:
+            st.dataframe(
+                thirty_df[["Year", "Match_Type", "Opponent", "Runs", "Balls", "Dismissal"]],
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.write("No 30+ scores")
+
+    else:
+        st.write("No batting data available")
+
+
+#DISMISSALS
 with st.expander("⬇️ View Dismissals", expanded=False):
 
     if bat["dismissals"]:
 
-        # 🔹 Sort by count (highest first)
+        # Sort highest first
         sorted_dismissals = sorted(
             bat["dismissals"].items(),
             key=lambda x: x[1],
             reverse=True
         )
 
-        for method, count in sorted_dismissals:
-            col1, col2 = st.columns([3, 1])
+        st.markdown("### 📊 Click a dismissal to see details")
 
-            col1.markdown(f"**{method}**")
+        selected_dismissal = None
+
+        for method, count in sorted_dismissals:
+            col1, col2 = st.columns([4, 1])
+
+            # 🔥 clickable button
+            if col1.button(f"{method}", key=f"dismiss_{method}"):
+                selected_dismissal = method
+
             col2.markdown(f"**{count}**")
 
-    else:
-        st.write("No dismissals recorded")
+        # -----------------------------
+        # 🔥 SHOW MATCH DETAILS
+        # -----------------------------
+        if selected_dismissal:
+
+            st.markdown("---")
+            st.markdown(f"### 📝 Matches with **{selected_dismissal}**")
+
+            # filter dataframe
+            filtered_df = df[
+                df["Dismissal"].str.strip().str.lower()
+                == selected_dismissal.lower()
+            ]
+
+            if not filtered_df.empty:
+                st.dataframe(
+                    filtered_df[["Year", "Match_Type", "Opponent", "Runs", "Balls"]],
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.write("No records found")
 
 # ================= BOWLING =================
-st.subheader("🎯 Bowling Stats")
-bowl = bowling_stats(df)
+# ================= BOWLING =================
+with st.container():
 
-col1, col2, col3 = st.columns(3)
+    st.markdown("## 🎯 Bowling Stats")
 
-col1.metric("Matches", len(df))
-col2.metric("Innings", bowl["innings"])
-col3.metric("Wickets", bowl["wickets"])
+    bowl = bowling_stats(df)
 
-col1.metric("Overs", bowl["overs"])
-col2.metric("Maidens", bowl["maidens"])
-col3.metric("Economy", round(bowl["economy"], 2))
+    col1, col2, col3 = st.columns(3)
 
-col1, col2, col3 = st.columns(3)
+    col1.metric("Matches", len(df))
+    col2.metric("Innings", bowl["innings"])
+    col3.metric("Wickets", bowl["wickets"])
 
-col1.metric("Average", round(bowl["average"], 2))
-col2.metric("Strike Rate", round(bowl["strike_rate"], 2))
+    col1.metric("Overs", bowl["overs"])
+    col2.metric("Maidens", bowl["maidens"])
+    col3.metric("Economy", round(bowl["economy"], 2))
 
-col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3)
 
-col1.metric("Best", bowl["best"])
-col2.metric("3W", bowl["3w"])
-col3.metric("5W", bowl["5w"])
+    col1.metric("Average", round(bowl["average"], 2))
+    col2.metric("Strike Rate", round(bowl["strike_rate"], 2))
+
+    col1, col2, col3 = st.columns(3)
+
+    col1.metric("Best", bowl["best"])
+    col2.metric("3W", bowl["3w"])
+    col3.metric("5W", bowl["5w"])
+
+    # 🔥 DETAILS INSIDE SAME BOX
+    with st.expander("⬇️ View Best Bowling Match Details", expanded=False):
+
+        bowling_df = df[df["Overs"].notna()].copy()
+
+        if not bowling_df.empty:
+
+            # -----------------------------
+            # 🔥 BEST BOWLING MATCH
+            # -----------------------------
+            st.markdown("### 🏆 Best Bowling Performance")
+
+            # find best row again (same logic)
+            best_row = None
+            best_wkts = -1
+            best_runs = 9999
+
+            for _, row in bowling_df.iterrows():
+                wkts = int(row["Wickets"])
+                runs = int(row["Runs_Conceded"])
+
+                if wkts > best_wkts or (wkts == best_wkts and runs < best_runs):
+                    best_wkts = wkts
+                    best_runs = runs
+                    best_row = row
+
+            if best_row is not None:
+                best_df = best_row.to_frame().T
+
+                st.dataframe(
+                    best_df[["Year", "Match_Type", "Opponent", "Overs", "Maidens", "Runs_Conceded", "Wickets"]],
+                    use_container_width=True,
+                    hide_index=True
+                )
+
+            st.markdown("---")
+
+            # -----------------------------
+            # 🔥 5 WICKETS
+            # -----------------------------
+            st.markdown("### 🔥 5 Wicket Matches")
+
+            five_df = bowling_df[bowling_df["Wickets"] >= 5]
+
+            if not five_df.empty:
+                st.dataframe(
+                    five_df[["Year", "Match_Type", "Opponent", "Overs", "Maidens", "Runs_Conceded", "Wickets"]],
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.write("No 5 wicket hauls")
+
+            st.markdown("---")
+
+            # -----------------------------
+            # 🔥 3 WICKETS
+            # -----------------------------
+            st.markdown("### 📈 3 Wicket Matches")
+
+            three_df = bowling_df[bowling_df["Wickets"] >= 3]
+
+            if not three_df.empty:
+                st.dataframe(
+                    three_df[["Year", "Match_Type", "Opponent", "Overs", "Maidens", "Runs_Conceded", "Wickets"]],
+                    use_container_width=True,
+                    hide_index=True
+                )
+            else:
+                st.write("No 3 wicket matches")
+
+        else:
+            st.write("No bowling data available")
