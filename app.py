@@ -143,27 +143,41 @@ if st.sidebar.button("🔄 Reset Filters"):
     st.experimental_rerun()
 
 # ================= BATTING =================
-st.subheader("🏏 Batting Stats")
-bat = batting_stats(df)
+# ================= BATTING =================
+with st.container():
 
-col1, col2, col3 = st.columns(3)
+    st.markdown("## 🏏 Batting Stats")
 
-col1.metric("Matches", bat["matches"])
-col2.metric("Innings", bat["innings"])
-col3.metric("Runs", bat["runs"])
+    bat = batting_stats(df)
 
-col1.metric("Balls", bat["balls"])
-col2.metric("Average", round(bat["average"], 2))
-col3.metric("Strike Rate", round(bat["strike_rate"], 2))
+    # 🔹 Row 1
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Matches", bat["matches"])
+    col2.metric("Innings", bat["innings"])
+    col3.metric("Runs", bat["runs"])
 
-col1, col2, col3 = st.columns(3)
+    # 🔹 Row 2
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Balls", bat["balls"])
+    col2.metric("Average", round(bat["average"], 2))
+    col3.metric("Strike Rate", round(bat["strike_rate"], 2))
 
-col1.metric("Highest", bat["highest_score_display"])
-col2.metric("50s", bat["50s"])
-col3.metric("100s", bat["100s"])
+    # 🔹 Row 3
+    col1, col2, col3 = st.columns(3)
 
-col1.metric("30+", bat["30s"])
-col2.metric("Catches", bat["catches"])
+    col1.metric("50s", bat["50s"])
+    col2.metric("100s", bat["100s"])
+    col3.metric("30+", bat["30s"])
+
+    # 🔹 Row 4
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Highest", bat["highest_score_display"])
+    col2.metric("4s",  int(df["4s"].fillna(0).sum()) if "4s" in df.columns else 0)
+    col3.metric("6s", int(df["6s"].fillna(0).sum() if "6s" in df.columns else 0))
+
+    # 🔹 Row 5
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Catches", bat["catches"])
 
 # ================= BATTING DETAILS =================
 with st.expander("⬇️ View Best Batting Match Details", expanded=False):
@@ -296,7 +310,7 @@ with st.expander("⬇️ View Dismissals", expanded=False):
             else:
                 st.write("No records found")
 
-# ================= BOWLING =================
+
 # ================= BOWLING =================
 with st.container():
 
