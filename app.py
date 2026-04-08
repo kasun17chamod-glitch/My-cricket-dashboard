@@ -165,17 +165,28 @@ col3.metric("100s", bat["100s"])
 col1.metric("30+", bat["30s"])
 col2.metric("Catches", bat["catches"])
 
+#DISMISSALS
 st.markdown("### Dismissals")
 
 with st.expander("⬇️ View Dismissals", expanded=False):
 
     if bat["dismissals"]:
-        for method, count in bat["dismissals"].items():
-            st.write(f"**{method}** — {count}")
+
+        # 🔹 Sort by count (highest first)
+        sorted_dismissals = sorted(
+            bat["dismissals"].items(),
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        for method, count in sorted_dismissals:
+            col1, col2 = st.columns([3, 1])
+
+            col1.markdown(f"**{method}**")
+            col2.markdown(f"**{count}**")
+
     else:
         st.write("No dismissals recorded")
-
-st.markdown("---")
 
 # ================= BOWLING =================
 st.subheader("🎯 Bowling Stats")
