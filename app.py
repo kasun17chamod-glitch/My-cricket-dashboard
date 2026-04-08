@@ -28,31 +28,61 @@ if "Match_Type" in df.columns:
     df = df[df["Match_Type"].isin(type_filter)]
 
 # ================= BATTING =================
+st.subheader("🏏 Batting Stats")
 bat = batting_stats(df)
 
-st.header("Batting Stats")
+col1, col2, col3 = st.columns(3)
 
-col1, col2 = st.columns(2)
-
-col1.metric("Runs", bat["runs"])
 col1.metric("Matches", bat["matches"])
-col1.metric("Average", round(bat["average"], 2))
+col2.metric("Innings", bat["innings"])
+col3.metric("Runs", bat["runs"])
 
-col2.metric("Balls", bat["balls"])
-col2.metric("Strike Rate", round(bat["strike_rate"], 2))
+col1.metric("Balls", bat["balls"])
+col2.metric("Average", round(bat["average"], 2))
+col3.metric("Strike Rate", round(bat["strike_rate"], 2))
 
-# ================= BOWLING =================
+#st.markdown("### Additional Stats")
+
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Highest", bat["highest_score_display"])
+col2.metric("50s", bat["50s"])
+col3.metric("100s", bat["100s"])
+
+col1.metric("30+", bat["30s"])
+col2.metric("Catches", bat["catches"])
+
+st.markdown("### Dismissals")
+
+if bat["dismissals"]:
+    for method, count in bat["dismissals"].items():
+        st.write(f"{method} - {count}")
+else:
+    st.write("No dismissals recorded")
+
+st.markdown("---")
+
+# ================= BOWLING =================-
+
+st.subheader("🎯 Bowling Stats")
 bowl = bowling_stats(df)
 
-if bowl:
-    st.header("Bowling Stats")
+col1, col2, col3 = st.columns(3)
 
-    col3, col4 = st.columns(2)
+col1.metric("Matches", len(df))   # total matches
+col2.metric("Innings", bowl["innings"])
+col3.metric("Wickets", bowl["wickets"])
 
-    col3.metric("Overs", bowl["overs"])
-    col3.metric("Runs", bowl["runs"])
-    col3.metric("Wickets", bowl["wickets"])
+col1.metric("Overs", bowl["overs"])
+col2.metric("Maidens", bowl["maidens"])
+col3.metric("Economy", round(bowl["economy"], 2))
 
-    col4.metric("Maidens", bowl["maidens"])
-    col4.metric("Average", round(bowl["average"], 2))
-    col4.metric("Economy", round(bowl["economy"], 2))
+col1, col2, col3 = st.columns(3)
+
+col1.metric("Average", round(bowl["average"], 2))
+col2.metric("Strike Rate", round(bowl["strike_rate"], 2))
+
+col1, col2, col3 = st.columns(3)
+col1.metric("Best", bowl["best"])
+col2.metric("3W", bowl["3w"])
+col3.metric("5W", bowl["5w"])
