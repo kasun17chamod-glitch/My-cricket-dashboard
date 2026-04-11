@@ -14,8 +14,33 @@ st.markdown("---")
 # ================= PROFILE HEADER =================
 col1, col2 = st.columns([2, 5])
 
+import base64   # put this at top of app.py with other imports
+
 with col1:
-    st.image("assets/profile.jpg", width=180)
+    st.markdown("""
+    <div style="
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        width:190px;
+        height:190px;
+        border-radius:50%;
+        padding:5px;
+        background: linear-gradient(135deg,#38bdf8,#2563eb,#38bdf8);
+        box-shadow: 0 0 25px rgba(56,189,248,0.45);
+        animation: glowPulse 2s infinite alternate;
+    ">
+        <img src="data:image/jpg;base64,{}" 
+             style="
+                width:180px;
+                height:180px;
+                border-radius:50%;
+                object-fit:cover;
+             ">
+    </div>
+    """.format(
+        base64.b64encode(open("assets/profile.jpg", "rb").read()).decode()
+    ), unsafe_allow_html=True)
 
 with col2:
     st.markdown("""

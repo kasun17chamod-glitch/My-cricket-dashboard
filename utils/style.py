@@ -4,7 +4,27 @@ import streamlit as st
 def apply_styles():
     st.markdown("""
     <style>
+    
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
+    html, body, [class*="css"]  {
+        font-family: 'Poppins', sans-serif;
+    }
+    h1 {
+    font-weight: 700;
+}
+
+h2, h3 {
+    font-weight: 600;
+}
+
+div[data-testid="stMetricLabel"] {
+    font-weight: 500;
+}
+
+div[data-testid="stMetricValue"] {
+    font-weight: 700;
+}
     /* ================= MAIN APP BACKGROUND ================= */
     .stApp {
         background: linear-gradient(-45deg, #0f172a, #1e293b, #172554, #0f172a);
