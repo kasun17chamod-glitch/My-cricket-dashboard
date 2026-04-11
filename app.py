@@ -6,11 +6,31 @@ from utils.style import apply_styles
 
 apply_styles()
 
+def glass_card_start():
+    st.markdown("""
+        <div style="
+            background: rgba(30,41,59,0.55);
+            padding: 25px;
+            border-radius: 20px;
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(56,189,248,0.12);
+            margin-bottom: 25px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+        ">
+    """, unsafe_allow_html=True)
+
+
+def glass_card_end():
+    st.markdown("</div>", unsafe_allow_html=True)
+
 # ================= LOAD DATA =================
 df = load_data("data/cricket_stats.xlsx")
 
 st.title("Cricket Stats 🏏")
 st.markdown("---")
+
+glass_card_start()
+
 # ================= PROFILE HEADER =================
 col1, col2 = st.columns([2, 5])
 
@@ -65,8 +85,10 @@ with col2:
 
     """, unsafe_allow_html=True)
 
-st.markdown("---")
 
+
+st.markdown("---")
+glass_card_end()
 # ================= FILTERS =================
 st.sidebar.title("🏏 Filters")
 
@@ -148,7 +170,7 @@ st.sidebar.markdown("---")
 if st.sidebar.button("🔄 Reset Filters"):
     st.experimental_rerun()
 
-
+glass_card_start()
 # ================= BATTING =================
 with st.container():
 
@@ -316,6 +338,9 @@ with st.expander("⬇️ View Dismissals", expanded=False):
             else:
                 st.write("No records found")
 
+glass_card_end()
+
+glass_card_start()
 
 # ================= BOWLING =================
 with st.container():
@@ -418,3 +443,4 @@ with st.container():
 
         else:
             st.write("No bowling data available")
+glass_card_end()
