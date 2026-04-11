@@ -2,60 +2,9 @@ import streamlit as st
 from utils.loader import load_data
 from utils.batting import batting_stats
 from utils.bowling import bowling_stats
+from utils.style import apply_styles
 
-
-# ================= UI STYLE =================
-def set_background():
-    st.markdown(
-        """
-        <style>
-        /* Main app background */
-        .stApp {
-            background: linear-gradient(135deg, #0f172a, #1e293b);
-            color: white;
-        }
-
-        /* Sidebar */
-        section[data-testid="stSidebar"] {
-            background-color: #020617;
-            color: white;
-        }
-
-        /* Metric cards */
-        div[data-testid="stMetric"] {
-            background-color: #1e293b;
-            padding: 15px;
-            border-radius: 10px;
-            border: 1px solid #334155;
-        }
-
-        /* Titles */
-        h1, h2, h3 {
-            color: #f1f5f9;
-        }
-
-        /* Buttons */
-        button {
-            background-color: #2563eb !important;
-            color: white !important;
-            border-radius: 8px !important;
-        }
-
-        /* Sidebar section cards */
-        section[data-testid="stSidebar"] .block-container > div {
-            background-color: #020617;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid #1e293b;
-            margin-bottom: 12px;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-
-
-set_background()
+apply_styles()
 
 # ================= LOAD DATA =================
 df = load_data("data/cricket_stats.xlsx")
