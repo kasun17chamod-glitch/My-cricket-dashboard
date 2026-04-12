@@ -34,6 +34,15 @@ def style_chart(fig, line_color):
 
     fig.update_layout(
 
+        height=450,
+
+        margin=dict(
+            l=20,
+            r=20,
+            t=50,
+            b=20
+        ),
+
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
 
