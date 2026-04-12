@@ -4,7 +4,7 @@ import streamlit as st
 
 
 # ==============================
-# COMMON CHART STYLING
+# COMMON CHART STYLE
 # ==============================
 def style_chart(fig, line_color):
 
@@ -15,7 +15,7 @@ def style_chart(fig, line_color):
         ),
 
         marker=dict(
-            size=12,
+            size=10,
             color=line_color,
             line=dict(
                 width=2,
@@ -25,10 +25,8 @@ def style_chart(fig, line_color):
 
         fill='tozeroy',
 
-        fillcolor=f'rgba{tuple(list(px.colors.hex_to_rgb(line_color)) + [0.15])}',
-
         hovertemplate=
-        "<b>Year:</b> %{x}<br>" +
+        "<b>Match:</b> %{x}<br>" +
         "<b>Value:</b> %{y:.2f}<extra></extra>"
     )
 
@@ -49,37 +47,49 @@ def style_chart(fig, line_color):
         font_color='white',
 
         title_font=dict(
-            size=20,
-            color='white'
+            size=20
         ),
 
         hoverlabel=dict(
             bgcolor="#1e293b",
             font_size=14,
-            font_color="white",
-            bordercolor=line_color
+            font_color="white"
         ),
 
         xaxis=dict(
-            showgrid=False,
-            zeroline=False
+            showgrid=False
         ),
 
         yaxis=dict(
             showgrid=True,
-            gridcolor='rgba(255,255,255,0.08)',
-            zeroline=False
-        ),
-
-        transition=dict(
-            duration=800,
-            easing='cubic-in-out'
+            gridcolor='rgba(255,255,255,0.08)'
         )
     )
 
-    fig.update_xaxes(type='category')
+    return fig
+
+
+# ==============================
+# YEAR DIVIDER LINES
+# ==============================
+def add_year_dividers(fig, df):
+
+    for i in range(1, len(df)):
+
+        if df.iloc[i]["Year"] != df.iloc[i - 1]["Year"]:
+
+            fig.add_vline(
+                x=df.iloc[i]["Match No"] - 0.5,
+
+                line_width=2,
+
+                line_dash="dash",
+
+                line_color="rgba(255,255,255,0.25)"
+            )
 
     return fig
+
 
 # ==============================
 # BATTING CHARTS
@@ -98,78 +108,82 @@ def render_batting_charts(df):
         errors="coerce"
     ).fillna(0)
 
-    batting_grouped = batting_df.groupby("Year").agg({
-        "Runs": ["sum", "max"],
-        "Balls": "sum"
-    }).reset_index()
+    batting_df = batting_df.reset_index(drop=True)
 
-    batting_grouped.columns = [
-        "Year",
-        "Total_Runs",
-        "High_Score",
-        "Balls"
-    ]
+    batting_df["Match No"] = batting_df.index + 1
 
-    batting_grouped["Average"] = (
-        batting_grouped["Total_Runs"] /
-        batting_df.groupby("Year").size().values
+    batting_df["Cumulative_Runs"] = batting_df["Runs"].cumsum()
+
+    batting_df["Out_Flag"] = (
+        batting_df["Out"]
+        .astype(str)
+        .str.lower()
+        .eq("yes")
+        .astype(int)
     )
 
-    batting_grouped["Strike_Rate"] = (
-        batting_grouped["Total_Runs"] /
-        batting_grouped["Balls"].replace(0, 1) * 100
+    batting_df["Cumulative_Outs"] = batting_df["Out_Flag"].cumsum()
+
+    batting_df["Average"] = (
+        batting_df["Cumulative_Runs"] /
+        batting_df["Cumulative_Outs"].replace(0, 1)
     )
 
-    batting_grouped["Year"] = batting_grouped["Year"].astype(str)
+    batting_df["Strike Rate"] = (
+        batting_df["Cumulative_Runs"] /
+        batting_df["Balls"].cumsum().replace(0, 1) * 100
+    )
+
+    batting_df["High Score"] = batting_df["Runs"].cummax()
 
     st.markdown("## 🏏 Batting Analytics")
 
-    col1, col2 = st.columns(2)
+    # ---------------- AVG ----------------
+    fig_avg = px.line(
+        batting_df,
+        x="Match No",
+        y="Average",
+        hover_data=["Year", "Opponent"],
+        title="Batting Average Progression",
+        markers=True
+    )
 
-    # LEFT COLUMN
-    with col1:
+    fig_avg = style_chart(fig_avg, "#38bdf8")
+    fig_avg = add_year_dividers(fig_avg, batting_df)
 
-        fig_avg = px.line(
-            batting_grouped,
-            x="Year",
-            y="Average",
-            title="Batting Average Over Time",
-            markers=True
-        )
+    st.plotly_chart(fig_avg, use_container_width=True)
 
-        st.plotly_chart(
-            style_chart(fig_avg, "#38bdf8"),
-            use_container_width=True
-        )
+    # ---------------- SR ----------------
+    fig_sr = px.line(
+        batting_df,
+        x="Match No",
+        y="Strike Rate",
+        hover_data=["Year", "Opponent"],
+        title="Strike Rate Progression",
+        markers=True
+    )
 
-        fig_sr = px.line(
-            batting_grouped,
-            x="Year",
-            y="Strike_Rate",
-            title="Strike Rate Over Time",
-            markers=True
-        )
+    fig_sr = style_chart(fig_sr, "#06b6d4")
+    fig_sr = add_year_dividers(fig_sr, batting_df)
 
-        st.plotly_chart(
-            style_chart(fig_sr, "#06b6d4"),
-            use_container_width=True
-        )
+    st.plotly_chart(fig_sr, use_container_width=True)
 
-    # RIGHT COLUMN
-    with col2:
+    # ---------------- HS ----------------
+    fig_hs = px.line(
+        batting_df,
+        x="Match No",
+        y="High Score",
+        hover_data=["Year", "Opponent"],
+        title="High Score Progression",
+        markers=True
+    )
 
-        fig_hs = px.line(
-            batting_grouped,
-            x="Year",
-            y="High_Score",
-            title="High Score Over Time",
-            markers=True
-        )
+    fig_hs = style_chart(fig_hs, "#3b82f6")
+    fig_hs = add_year_dividers(fig_hs, batting_df)
 
-        st.plotly_chart(
-            style_chart(fig_hs, "#3b82f6"),
-            use_container_width=True
-        )
+    st.plotly_chart(fig_hs, use_container_width=True)
+
+
 # ==============================
 # BOWLING CHARTS
 # ==============================
@@ -192,72 +206,74 @@ def render_bowling_charts(df):
         errors="coerce"
     ).fillna(0)
 
-    grouped = bowling_df.groupby("Year").agg({
-        "Runs_Conceded": "sum",
-        "Wickets": "sum",
-        "Overs": "sum"
-    }).reset_index()
+    bowling_df = bowling_df.reset_index(drop=True)
 
-    grouped["Bowling_Average"] = (
-        grouped["Runs_Conceded"] /
-        grouped["Wickets"].replace(0, 1)
+    bowling_df["Match No"] = bowling_df.index + 1
+
+    bowling_df["Cum_Runs"] = bowling_df["Runs_Conceded"].cumsum()
+
+    bowling_df["Cum_Wickets"] = bowling_df["Wickets"].cumsum()
+
+    bowling_df["Cum_Overs"] = bowling_df["Overs"].cumsum()
+
+    bowling_df["Bowling Average"] = (
+        bowling_df["Cum_Runs"] /
+        bowling_df["Cum_Wickets"].replace(0, 1)
     )
 
-    grouped["Economy"] = (
-        grouped["Runs_Conceded"] /
-        grouped["Overs"].replace(0, 1)
+    bowling_df["Economy"] = (
+        bowling_df["Cum_Runs"] /
+        bowling_df["Cum_Overs"].replace(0, 1)
     )
 
-    grouped["Strike_Rate"] = (
-        grouped["Overs"] * 6 /
-        grouped["Wickets"].replace(0, 1)
+    bowling_df["Strike Rate"] = (
+        bowling_df["Cum_Overs"] * 6 /
+        bowling_df["Cum_Wickets"].replace(0, 1)
     )
-
-    grouped["Year"] = grouped["Year"].astype(str)
 
     st.markdown("## 🎯 Bowling Analytics")
 
-    col1, col2 = st.columns(2)
+    # ---------------- AVG ----------------
+    fig_avg = px.line(
+        bowling_df,
+        x="Match No",
+        y="Bowling Average",
+        hover_data=["Year", "Opponent"],
+        title="Bowling Average Progression",
+        markers=True
+    )
 
-    with col1:
+    fig_avg = style_chart(fig_avg, "#ef4444")
+    fig_avg = add_year_dividers(fig_avg, bowling_df)
 
-        fig_bavg = px.line(
-            grouped,
-            x="Year",
-            y="Bowling_Average",
-            title="Bowling Average Over Time",
-            markers=True
-        )
+    st.plotly_chart(fig_avg, use_container_width=True)
 
-        st.plotly_chart(
-            style_chart(fig_bavg, "#ef4444"),
-            use_container_width=True
-        )
+    # ---------------- SR ----------------
+    fig_sr = px.line(
+        bowling_df,
+        x="Match No",
+        y="Strike Rate",
+        hover_data=["Year", "Opponent"],
+        title="Bowling Strike Rate Progression",
+        markers=True
+    )
 
-        fig_sr = px.line(
-            grouped,
-            x="Year",
-            y="Strike_Rate",
-            title="Bowling Strike Rate Over Time",
-            markers=True
-        )
+    fig_sr = style_chart(fig_sr, "#f97316")
+    fig_sr = add_year_dividers(fig_sr, bowling_df)
 
-        st.plotly_chart(
-            style_chart(fig_sr, "#f97316"),
-            use_container_width=True
-        )
+    st.plotly_chart(fig_sr, use_container_width=True)
 
-    with col2:
+    # ---------------- ECO ----------------
+    fig_eco = px.line(
+        bowling_df,
+        x="Match No",
+        y="Economy",
+        hover_data=["Year", "Opponent"],
+        title="Economy Progression",
+        markers=True
+    )
 
-        fig_eco = px.line(
-            grouped,
-            x="Year",
-            y="Economy",
-            title="Economy Over Time",
-            markers=True
-        )
+    fig_eco = style_chart(fig_eco, "#fb923c")
+    fig_eco = add_year_dividers(fig_eco, bowling_df)
 
-        st.plotly_chart(
-            style_chart(fig_eco, "#fb923c"),
-            use_container_width=True
-        )
+    st.plotly_chart(fig_eco, use_container_width=True)

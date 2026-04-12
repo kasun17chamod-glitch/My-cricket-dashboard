@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="778c50eb-afb0-49dc-aa95-19a6064cddb8" name="Changes" comment="Add wrapping">
-      <change afterPath="$PROJECT_DIR$/utils/charts.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/utils/components.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="778c50eb-afb0-49dc-aa95-19a6064cddb8" name="Changes" comment="chart update">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils/charts.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/charts.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -185,7 +182,31 @@
       <option name="project" value="LOCAL" />
       <updated>1775928792864</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="add charts">
+      <option name="closed" value="true" />
+      <created>1775983681307</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1775983681307</updated>
+    </task>
+    <task id="LOCAL-00015" summary="requirement text update">
+      <option name="closed" value="true" />
+      <created>1775983891180</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1775983891180</updated>
+    </task>
+    <task id="LOCAL-00016" summary="chart update">
+      <option name="closed" value="true" />
+      <created>1775984359292</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1775984359292</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -209,6 +230,9 @@
     <MESSAGE value="UpdateUI" />
     <MESSAGE value="Update profile" />
     <MESSAGE value="Add wrapping" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add wrapping" />
+    <MESSAGE value="add charts" />
+    <MESSAGE value="requirement text update" />
+    <MESSAGE value="chart update" />
+    <option name="LAST_COMMIT_MESSAGE" value="chart update" />
   </component>
 </project>
