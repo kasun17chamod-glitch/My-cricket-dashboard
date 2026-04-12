@@ -25,6 +25,17 @@ div[data-testid="stMetricLabel"] {
 div[data-testid="stMetricValue"] {
     font-weight: 700;
 }
+@keyframes fadeMetric {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
     /* ================= MAIN APP BACKGROUND ================= */
     .stApp {
         background: linear-gradient(-45deg, #0f172a, #1e293b, #172554, #0f172a);

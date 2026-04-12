@@ -3,6 +3,8 @@ from utils.loader import load_data
 from utils.batting import batting_stats
 from utils.bowling import bowling_stats
 from utils.style import apply_styles
+from utils.charts import render_batting_charts, render_bowling_charts
+
 
 apply_styles()
 
@@ -443,4 +445,12 @@ with st.container():
 
         else:
             st.write("No bowling data available")
+glass_card_end()
+
+glass_card_start()
+render_batting_charts(df)
+glass_card_end()
+
+glass_card_start()
+render_bowling_charts(df)
 glass_card_end()
