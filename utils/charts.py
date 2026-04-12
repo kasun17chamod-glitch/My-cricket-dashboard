@@ -70,23 +70,67 @@ def style_chart(fig, line_color):
 
 
 # ==============================
-# YEAR DIVIDER LINES
+# YEAR DIVIDERS + LABELS
 # ==============================
 def add_year_dividers(fig, df):
+
+    split_positions = []
+    year_ranges = []
+
+    start_match = df.iloc[0]["Match No"]
+    current_year = df.iloc[0]["Year"]
 
     for i in range(1, len(df)):
 
         if df.iloc[i]["Year"] != df.iloc[i - 1]["Year"]:
 
-            fig.add_vline(
-                x=df.iloc[i]["Match No"] - 0.5,
+            split_x = df.iloc[i]["Match No"] - 0.5
+            split_positions.append(split_x)
 
-                line_width=2,
+            year_ranges.append((
+                current_year,
+                start_match,
+                df.iloc[i - 1]["Match No"]
+            ))
 
-                line_dash="dash",
+            start_match = df.iloc[i]["Match No"]
+            current_year = df.iloc[i]["Year"]
 
-                line_color="rgba(255,255,255,0.25)"
+    year_ranges.append((
+        current_year,
+        start_match,
+        df.iloc[len(df)-1]["Match No"]
+    ))
+
+    # Divider lines
+    for split_x in split_positions:
+
+        fig.add_vline(
+            x=split_x,
+            line_width=2,
+            line_dash="dash",
+            line_color="rgba(255,255,255,0.25)"
+        )
+
+    # Labels
+    for year, start, end in year_ranges:
+
+        midpoint = (start + end) / 2
+
+        fig.add_annotation(
+            x=midpoint,
+            y=1.05,
+            yref="paper",
+
+            text=str(year),
+
+            showarrow=False,
+
+            font=dict(
+                size=14,
+                color="rgba(255,255,255,0.65)"
             )
+        )
 
     return fig
 
@@ -138,50 +182,25 @@ def render_batting_charts(df):
 
     st.markdown("## 🏏 Batting Analytics")
 
-    # ---------------- AVG ----------------
-    fig_avg = px.line(
-        batting_df,
-        x="Match No",
-        y="Average",
-        hover_data=["Year", "Opponent"],
-        title="Batting Average Progression",
-        markers=True
-    )
+    for title, y_col, color in [
+        ("Batting Average Progression", "Average", "#38bdf8"),
+        ("Strike Rate Progression", "Strike Rate", "#06b6d4"),
+        ("High Score Progression", "High Score", "#3b82f6")
+    ]:
 
-    fig_avg = style_chart(fig_avg, "#38bdf8")
-    fig_avg = add_year_dividers(fig_avg, batting_df)
+        fig = px.line(
+            batting_df,
+            x="Match No",
+            y=y_col,
+            hover_data=["Year", "Opponent"],
+            title=title,
+            markers=True
+        )
 
-    st.plotly_chart(fig_avg, use_container_width=True)
+        fig = style_chart(fig, color)
+        fig = add_year_dividers(fig, batting_df)
 
-    # ---------------- SR ----------------
-    fig_sr = px.line(
-        batting_df,
-        x="Match No",
-        y="Strike Rate",
-        hover_data=["Year", "Opponent"],
-        title="Strike Rate Progression",
-        markers=True
-    )
-
-    fig_sr = style_chart(fig_sr, "#06b6d4")
-    fig_sr = add_year_dividers(fig_sr, batting_df)
-
-    st.plotly_chart(fig_sr, use_container_width=True)
-
-    # ---------------- HS ----------------
-    fig_hs = px.line(
-        batting_df,
-        x="Match No",
-        y="High Score",
-        hover_data=["Year", "Opponent"],
-        title="High Score Progression",
-        markers=True
-    )
-
-    fig_hs = style_chart(fig_hs, "#3b82f6")
-    fig_hs = add_year_dividers(fig_hs, batting_df)
-
-    st.plotly_chart(fig_hs, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
 
 
 # ==============================
@@ -233,47 +252,22 @@ def render_bowling_charts(df):
 
     st.markdown("## 🎯 Bowling Analytics")
 
-    # ---------------- AVG ----------------
-    fig_avg = px.line(
-        bowling_df,
-        x="Match No",
-        y="Bowling Average",
-        hover_data=["Year", "Opponent"],
-        title="Bowling Average Progression",
-        markers=True
-    )
+    for title, y_col, color in [
+        ("Bowling Average Progression", "Bowling Average", "#ef4444"),
+        ("Bowling Strike Rate Progression", "Strike Rate", "#f97316"),
+        ("Economy Progression", "Economy", "#fb923c")
+    ]:
 
-    fig_avg = style_chart(fig_avg, "#ef4444")
-    fig_avg = add_year_dividers(fig_avg, bowling_df)
+        fig = px.line(
+            bowling_df,
+            x="Match No",
+            y=y_col,
+            hover_data=["Year", "Opponent"],
+            title=title,
+            markers=True
+        )
 
-    st.plotly_chart(fig_avg, use_container_width=True)
+        fig = style_chart(fig, color)
+        fig = add_year_dividers(fig, bowling_df)
 
-    # ---------------- SR ----------------
-    fig_sr = px.line(
-        bowling_df,
-        x="Match No",
-        y="Strike Rate",
-        hover_data=["Year", "Opponent"],
-        title="Bowling Strike Rate Progression",
-        markers=True
-    )
-
-    fig_sr = style_chart(fig_sr, "#f97316")
-    fig_sr = add_year_dividers(fig_sr, bowling_df)
-
-    st.plotly_chart(fig_sr, use_container_width=True)
-
-    # ---------------- ECO ----------------
-    fig_eco = px.line(
-        bowling_df,
-        x="Match No",
-        y="Economy",
-        hover_data=["Year", "Opponent"],
-        title="Economy Progression",
-        markers=True
-    )
-
-    fig_eco = style_chart(fig_eco, "#fb923c")
-    fig_eco = add_year_dividers(fig_eco, bowling_df)
-
-    st.plotly_chart(fig_eco, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
