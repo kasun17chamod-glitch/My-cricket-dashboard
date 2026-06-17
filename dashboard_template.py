@@ -1,24 +1,33 @@
 """
-Cricket dashboard HTML template — enhanced edition.
+Cricket dashboard HTML template — broadcast scoreboard edition.
 
 Same function signature and data contract as the original. The data layer,
-chart configurations, filtering logic, and all computations are byte-for-byte
-preserved. Only the presentation has been re-engineered:
+chart configurations, filtering logic, and the core stat computations
+(``computeBatting`` / ``computeBowling``) are preserved unchanged. The
+presentation has been rebuilt around a live-TV cricket-broadcast visual
+language, and four data features were added on top of the existing maths.
 
-  • Stadium-style hero with animated cricket-pitch backdrop and stumps SVG.
-  • Refined glass cards with edge-light, depth shadow and 3-D tilt on hover.
-  • Top scroll-progress bar (gradient bat → ball).
-  • Performance radar chart added to Overview.
-  • Career timeline strip with milestone dots.
-  • Achievements ribbon (auto-derived from existing stats).
-  • Theme switcher (Midnight / Stadium / Floodlight) — pure CSS variables.
-  • Keyboard shortcuts (1–4 tabs, F filters, R reset, T theme, P print).
-  • Toast notifications, scroll-to-top, magnetic primary buttons.
-  • Print-to-PDF stylesheet for clean exports.
-  • IntersectionObserver-driven reveal animations.
-  • Cricket-ball seam dividers between sections.
+Visual identity (broadcast scoreboard)
+  • Saira Condensed display/numerals → stadium-scoreboard typography.
+  • Header "scorebug" with live dot, in the style of a TV score graphic.
+  • Lower-third section headings (accent rail + kicker + condensed title).
+  • Scoreboard "score-cell" readouts for hero KPIs and head-to-head stats.
+  • Auto-scrolling "LIVE FORM" achievements ticker (replaces the ribbon).
+  • Panel treatment with left accent rails and LED scanline texture.
 
-Font remains Manrope (loaded from Google Fonts) per the original requirement.
+New features (all derived from the existing columns)
+  • Player rating card — FIFA-style BAT / BOWL / FIELD / overall index.
+  • Head-to-head — pick an opponent, see batting & bowling record vs them.
+  • Season-by-season comparison table — runs/avg/SR/HS/wkts/econ/best per year.
+  • Expandable match scorecards — click any match row for a full breakdown.
+
+Preserved from the previous edition
+  • Theme switcher (Midnight / Stadium / Floodlight), restyled per identity.
+  • Floating particles, 3-D card tilt, magnetic buttons, scroll progress,
+    scroll-to-top, toasts, reveal animations, print-to-PDF, keyboard shortcuts.
+
+Fonts: Manrope (body) + Saira Condensed / Saira Semi Condensed (display),
+all loaded from Google Fonts.
 """
 
 import json
@@ -45,10 +54,10 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
 <meta name="theme-color" content="#0a0e1a" />
 <title>Kasun Chamod · Cricket Stats</title>
 
-<!-- Manrope (display + body) -->
+<!-- Manrope (body) + Saira Condensed (scoreboard display/numerals) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Saira+Condensed:wght@500;600;700;800;900&family=Saira+Semi+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 
 <!-- Tailwind via play CDN -->
 <script src="https://cdn.tailwindcss.com"></script>
@@ -130,13 +139,20 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
   em, a, li, ul, ol, code, h1, h2, h3, h4, h5, h6 {{
     font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif !important;
   }}
-  .font-serif, .num-display, .font-mono, .num {{
+  .font-mono {{
     font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif !important;
   }}
+  /* Scoreboard display face — condensed, broadcast-grade */
+  .font-serif, .num-display, .num, .scorenum, h1, h2, h3,
+  .ticker, .lt-title, .panel-kicker {{
+    font-family: 'Saira Condensed', 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif !important;
+  }}
   .italic, i:not([data-lucide]) {{ font-style: normal !important; }}
-  .font-serif {{ font-weight: 800; letter-spacing: -0.02em; }}
-  .num-display {{ font-weight: 800; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }}
+  .font-serif {{ font-weight: 800; letter-spacing: 0; text-transform: uppercase; }}
+  h1.font-serif, h2.font-serif {{ letter-spacing: .01em; }}
+  .num-display {{ font-weight: 800; letter-spacing: 0; font-variant-numeric: tabular-nums; }}
   .font-mono, .num {{ font-variant-numeric: tabular-nums; }}
+  .num {{ font-weight: 700; }}
 
   /* ============= BACKGROUND ============= */
   .app-bg {{
@@ -488,6 +504,177 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
   .theme-dot:hover {{ transform: scale(1.15); }}
   .theme-dot[data-active="true"] {{ border-color: #fff; }}
 
+  /* ============================================================
+     BROADCAST SCOREBOARD LAYER
+     ============================================================ */
+
+  /* Scorebug — the TV brand bug in the header */
+  .scorebug {{
+    position: relative;
+    display: inline-flex; align-items: center; gap: 0;
+    border-radius: 8px; overflow: hidden;
+    box-shadow: 0 6px 18px -8px rgba(0,0,0,.7), inset 0 0 0 1px rgba(255,255,255,.06);
+  }}
+  .scorebug .sb-tag {{
+    background: linear-gradient(180deg, var(--bat), color-mix(in srgb, var(--bat) 70%, #000));
+    color: #04121a; font-weight: 900; letter-spacing: .06em;
+    padding: 6px 9px; font-size: 12px; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 5px;
+  }}
+  .scorebug .sb-name {{
+    background: rgba(0,0,0,.35); padding: 6px 12px 6px 11px;
+    display: flex; flex-direction: column; line-height: 1;
+  }}
+
+  /* Live dot */
+  @keyframes blink {{ 0%,60%{{opacity:1}} 80%,100%{{opacity:.25}} }}
+  .live-dot {{ width:7px; height:7px; border-radius:50%; background:var(--rose); box-shadow:0 0 10px var(--rose); animation: blink 1.4s infinite; }}
+
+  /* Lower-third section heading — the signature broadcast graphic */
+  .lt {{ display:flex; align-items:stretch; gap:12px; }}
+  .lt-bar {{
+    flex:0 0 auto; width:7px; border-radius:3px;
+    background: linear-gradient(180deg, var(--bat), var(--bowl));
+    box-shadow: 0 0 16px var(--bat-glow);
+  }}
+  .lt-kicker {{
+    font-size:11px; letter-spacing:.3em; text-transform:uppercase;
+    color: var(--bat); font-weight:800;
+    display:inline-flex; align-items:center; gap:7px;
+  }}
+  .lt-title {{ font-weight:800; text-transform:uppercase; line-height:.95; letter-spacing:.01em; color:#fff; }}
+  .lt-sub {{ font-size:13px; color: var(--text-3); margin-top:3px; }}
+
+  /* Scoreboard panel treatment — left accent rail + LED scanline */
+  .panel {{ border-radius: 14px; overflow:hidden; }}
+  .panel::after {{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+    background: linear-gradient(180deg, var(--bat), var(--bowl)); opacity:.95;
+  }}
+  .panel--bowl::after {{ background: linear-gradient(180deg, var(--bowl), var(--bowl)); }}
+  .panel--mint::after {{ background: linear-gradient(180deg, var(--mint), var(--bat)); }}
+
+  /* Scoreboard cell — for the hero KPI readout */
+  .score-cell {{
+    position: relative;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
+    border: 1px solid var(--border-1);
+    border-radius: 12px; padding: 12px 14px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  }}
+  .score-cell .sc-label {{
+    font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+    color: var(--text-3); font-weight:700;
+    display:inline-flex; align-items:center; gap:6px;
+  }}
+  .score-cell .sc-val {{
+    font-family:'Saira Condensed','Manrope',sans-serif; font-weight:800;
+    font-variant-numeric: tabular-nums; line-height:1; margin-top:6px;
+    text-shadow: 0 0 18px currentColor;
+  }}
+
+  /* ============= TICKER (broadcast bottom-ticker) ============= */
+  .ticker-rail {{
+    position: relative; overflow: hidden;
+    border: 1px solid var(--border-1); border-radius: 12px;
+    background: linear-gradient(90deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  }}
+  .ticker-rail::before {{
+    content: "LIVE FORM"; position:absolute; left:0; top:0; bottom:0; z-index:2;
+    display:flex; align-items:center; gap:6px; padding:0 14px;
+    background: linear-gradient(180deg, var(--bowl), color-mix(in srgb, var(--bowl) 65%, #000));
+    color:#1a1205; font-weight:900; font-size:11px; letter-spacing:.14em;
+    font-family:'Saira Condensed','Manrope',sans-serif;
+  }}
+  .ticker {{
+    display:inline-flex; align-items:center; gap:34px; white-space:nowrap;
+    padding: 11px 0 11px 120px;
+    animation: tickerScroll 38s linear infinite;
+    font-weight:700; letter-spacing:.04em;
+  }}
+  .ticker:hover {{ animation-play-state: paused; }}
+  .ticker .tk {{ display:inline-flex; align-items:center; gap:8px; color: var(--text-2); font-size:13px; text-transform:uppercase; }}
+  .ticker .tk i {{ color: var(--bat); }}
+  .ticker .tk .dot {{ width:5px; height:5px; border-radius:50%; background: var(--bowl); }}
+  @keyframes tickerScroll {{ from {{ transform: translateX(0); }} to {{ transform: translateX(-50%); }} }}
+
+  /* ============= PLAYER RATING CARD ============= */
+  .rating-card {{
+    position: relative; overflow: hidden; border-radius: 18px;
+    background:
+      radial-gradient(120% 80% at 80% -10%, var(--bat-glow), transparent 60%),
+      linear-gradient(160deg, rgba(20,28,48,.85), rgba(8,11,20,.92));
+    border: 1px solid var(--border-2);
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,.7);
+  }}
+  .rating-card::before {{
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background: repeating-linear-gradient(115deg, rgba(255,255,255,.04) 0 2px, transparent 2px 9px);
+    opacity:.5;
+  }}
+  .ovr-badge {{
+    font-family:'Saira Condensed',sans-serif; font-weight:900; line-height:.82;
+    color:#fff; text-shadow:0 0 30px var(--bat-glow);
+  }}
+  .rating-bar {{ height:7px; border-radius:5px; background: rgba(255,255,255,.08); overflow:hidden; }}
+  .rating-bar > span {{ display:block; height:100%; border-radius:5px; background: linear-gradient(90deg, var(--bat), var(--bowl)); transition: width 1s cubic-bezier(.2,.7,.2,1); box-shadow:0 0 12px var(--bat-glow); }}
+
+  /* ============= HEAD-TO-HEAD ============= */
+  .h2h-select {{
+    appearance:none; -webkit-appearance:none;
+    background: rgba(255,255,255,.04) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2.5'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 12px center;
+    border:1px solid var(--border-2); color: var(--text-1);
+    padding:10px 38px 10px 14px; border-radius:12px; font-weight:700; font-size:14px;
+    cursor:pointer; min-width: 200px;
+  }}
+  .h2h-select:focus {{ outline:none; border-color: var(--bat); box-shadow:0 0 0 4px var(--bat-glow); }}
+  .vs-stat {{ text-align:center; }}
+  .vs-stat .v {{ font-family:'Saira Condensed',sans-serif; font-weight:800; line-height:1; }}
+  .vs-stat .k {{ font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-3); margin-top:4px; }}
+
+  /* ============= EXPANDABLE SCORECARD ============= */
+  .ctable tr.match-row {{ cursor:pointer; }}
+  .ctable tr.match-row td:first-child {{ position:relative; }}
+  .ctable tr.match-row td:first-child::before {{
+    content:"▸"; color: var(--text-4); margin-right:6px; display:inline-block;
+    transition: transform .2s; font-size:10px;
+  }}
+  .ctable tr.match-row.open td:first-child::before {{ transform: rotate(90deg); color: var(--bat); }}
+  .scorecard-row > td {{ padding:0 !important; border-bottom:1px solid var(--border-1) !important; }}
+  .scorecard {{
+    padding: 16px 18px;
+    background:
+      repeating-linear-gradient(0deg, rgba(255,255,255,.02) 0 1px, transparent 1px 4px),
+      rgba(0,0,0,.28);
+    border-left: 3px solid var(--bat);
+  }}
+  .scorecard .sc-grid {{ display:grid; grid-template-columns: repeat(auto-fit,minmax(120px,1fr)); gap:14px; }}
+  .sc-box {{ background: rgba(255,255,255,.03); border:1px solid var(--border-1); border-radius:10px; padding:10px 12px; }}
+  .sc-box .l {{ font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--text-3); font-weight:700; }}
+  .sc-box .v {{ font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:22px; margin-top:3px; }}
+  .card-expand {{ overflow:hidden; }}
+  .card-expand .scorecard {{ margin-top:12px; border-radius:10px; border-left:3px solid var(--bat); }}
+
+  /* ============= SEASON COMPARISON TABLE ============= */
+  .season-table {{ width:100%; border-collapse:separate; border-spacing:0; }}
+  .season-table th {{
+    font-size:10px; text-transform:uppercase; letter-spacing:.1em; color:var(--text-3);
+    font-weight:800; padding:10px 12px; text-align:right; white-space:nowrap;
+    border-bottom:1px solid var(--border-2);
+  }}
+  .season-table th:first-child {{ text-align:left; }}
+  .season-table td {{ padding:11px 12px; text-align:right; font-variant-numeric:tabular-nums; border-bottom:1px solid var(--border-1); }}
+  .season-table td:first-child {{ text-align:left; font-weight:800; font-family:'Saira Condensed',sans-serif; }}
+  .season-table tr:last-child td {{ border-bottom:none; }}
+  .season-table tr:hover td {{ background: rgba(34,211,238,.04); }}
+  .season-table .yr-bar {{
+    display:inline-block; height:4px; border-radius:3px; vertical-align:middle; margin-left:6px;
+    background: linear-gradient(90deg, var(--bat), var(--bowl));
+  }}
+
   /* ============= PRINT ============= */
   @media print {{
     .app-bg, .app-grain, .particles, .scroll-progress, .scroll-top, .toast-wrap,
@@ -515,15 +702,12 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
 <!-- ============= TOP NAV ============= -->
 <header class="sticky top-0 z-40 backdrop-blur-xl border-b border-white/5" style="background: color-mix(in srgb, var(--bg-1) 80%, transparent);">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-4">
-    <div class="flex items-center gap-2.5 min-w-0">
-      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-bat-400 to-bowl-500 grid place-items-center shadow-glow shrink-0 relative overflow-hidden">
-        <i data-lucide="trophy" class="w-4 h-4 text-ink-900 relative z-10"></i>
-        <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-0 hover:opacity-100 transition-opacity"></div>
-      </div>
-      <div class="leading-tight min-w-0">
-        <div class="text-[11px] uppercase tracking-[0.2em] text-slate-400">Player Stats</div>
-        <div class="text-sm font-bold truncate">Kasun Chamod</div>
-      </div>
+    <div class="scorebug min-w-0">
+      <span class="sb-tag"><i data-lucide="trophy" class="w-3.5 h-3.5"></i>STATS</span>
+      <span class="sb-name min-w-0">
+        <span class="text-[10px] uppercase tracking-[0.22em] text-slate-400 flex items-center gap-1.5"><span class="live-dot"></span>Player Centre</span>
+        <span class="text-sm font-bold truncate text-white" style="font-family:'Saira Semi Condensed',sans-serif;letter-spacing:.02em;">KASUN CHAMOD</span>
+      </span>
     </div>
 
     <nav id="topTabs" class="hidden md:flex items-center gap-1 text-sm text-slate-400 font-semibold" role="tablist">
@@ -634,22 +818,22 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
 
           <div class="accent-line mt-5"></div>
 
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-5">
-            <div>
-              <div class="text-[11px] uppercase tracking-[0.15em] text-slate-400 inline-flex items-center gap-1.5"><i data-lucide="layers" class="w-3 h-3"></i>Matches</div>
-              <div class="num-display num text-4xl sm:text-5xl mt-1 text-white" id="kpi-matches">—</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+            <div class="score-cell">
+              <div class="sc-label"><i data-lucide="layers" class="w-3 h-3"></i>Matches</div>
+              <div class="sc-val num text-4xl sm:text-5xl text-white" id="kpi-matches">—</div>
             </div>
-            <div>
-              <div class="text-[11px] uppercase tracking-[0.15em] text-slate-400 inline-flex items-center gap-1.5"><i data-lucide="circle-dot" class="w-3 h-3"></i>Runs</div>
-              <div class="num-display num text-4xl sm:text-5xl mt-1 text-bat-400" id="kpi-runs">—</div>
+            <div class="score-cell">
+              <div class="sc-label"><i data-lucide="circle-dot" class="w-3 h-3"></i>Runs</div>
+              <div class="sc-val num text-4xl sm:text-5xl text-bat-400" id="kpi-runs">—</div>
             </div>
-            <div>
-              <div class="text-[11px] uppercase tracking-[0.15em] text-slate-400 inline-flex items-center gap-1.5"><i data-lucide="rotate-ccw" class="w-3 h-3"></i>Wickets</div>
-              <div class="num-display num text-4xl sm:text-5xl mt-1 text-bowl-400" id="kpi-wickets">—</div>
+            <div class="score-cell">
+              <div class="sc-label"><i data-lucide="rotate-ccw" class="w-3 h-3"></i>Wickets</div>
+              <div class="sc-val num text-4xl sm:text-5xl text-bowl-400" id="kpi-wickets">—</div>
             </div>
-            <div>
-              <div class="text-[11px] uppercase tracking-[0.15em] text-slate-400 inline-flex items-center gap-1.5"><i data-lucide="hand" class="w-3 h-3"></i>Catches</div>
-              <div class="num-display num text-4xl sm:text-5xl mt-1 text-mint-400" id="kpi-catches">—</div>
+            <div class="score-cell">
+              <div class="sc-label"><i data-lucide="hand" class="w-3 h-3"></i>Catches</div>
+              <div class="sc-val num text-4xl sm:text-5xl text-mint-400" id="kpi-catches">—</div>
             </div>
           </div>
 
@@ -665,9 +849,11 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
     </div>
   </section>
 
-  <!-- ACHIEVEMENTS RIBBON -->
+  <!-- ACHIEVEMENTS TICKER -->
   <section class="mt-4 reveal">
-    <div id="achievementsRibbon" class="flex gap-2 overflow-x-auto scroll-x py-1"></div>
+    <div class="ticker-rail">
+      <div id="achievementsRibbon" class="ticker"></div>
+    </div>
   </section>
 
   <!-- ACTIVE FILTERS -->
@@ -681,11 +867,42 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
 
   <!-- OVERVIEW -->
   <div data-tab-pane="overview">
+
+    <!-- PLAYER RATING CARD -->
     <section class="mt-8 io-hidden">
-      <div class="flex items-end justify-between mb-4">
+      <div class="lt mb-4">
+        <div class="lt-bar"></div>
         <div>
-          <h2 class="font-serif text-3xl sm:text-4xl text-white">Career at a glance</h2>
-          <p class="text-sm text-slate-400 mt-1">A quick read of every format</p>
+          <div class="lt-kicker"><i data-lucide="gauge" class="w-3.5 h-3.5"></i>Player Index</div>
+          <h2 class="lt-title text-3xl sm:text-4xl">Overall Rating</h2>
+          <div class="lt-sub">Auto-derived from career batting, bowling &amp; fielding</div>
+        </div>
+      </div>
+      <div class="rating-card p-5 sm:p-7">
+        <div class="grid grid-cols-1 md:grid-cols-[auto,1fr] gap-6 md:gap-9 items-center relative z-10">
+          <!-- OVR block -->
+          <div class="flex items-center gap-5 md:flex-col md:items-start md:gap-2">
+            <div class="flex flex-col items-center md:items-start">
+              <div class="ovr-badge text-7xl sm:text-8xl" id="ovrValue">—</div>
+              <div class="text-[11px] uppercase tracking-[0.3em] text-slate-400 font-bold mt-1">Overall</div>
+            </div>
+            <div class="md:mt-3">
+              <span id="ovrTier" class="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] font-bold px-3 py-1.5 rounded-full border border-bat-400/40 bg-bat-400/10 text-bat-200">All-Rounder</span>
+            </div>
+          </div>
+          <!-- attribute bars -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-x-7 gap-y-4" id="ratingBars"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-10 io-hidden">
+      <div class="lt mb-4">
+        <div class="lt-bar"></div>
+        <div>
+          <div class="lt-kicker"><i data-lucide="trophy" class="w-3.5 h-3.5"></i>Formats</div>
+          <h2 class="lt-title text-3xl sm:text-4xl">Career at a glance</h2>
+          <div class="lt-sub">A quick read of every format</div>
         </div>
       </div>
       <div id="formatGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -703,6 +920,36 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
         </div>
         <div id="timelineTrack" class="timeline-track"></div>
         <div id="timelineLabels" class="relative h-5 mt-1"></div>
+      </div>
+    </section>
+
+    <!-- SEASON BY SEASON -->
+    <section class="mt-10 io-hidden">
+      <div class="lt mb-4">
+        <div class="lt-bar"></div>
+        <div>
+          <div class="lt-kicker"><i data-lucide="calendar-range" class="w-3.5 h-3.5"></i>Year on Year</div>
+          <h2 class="lt-title text-3xl sm:text-4xl">Season by season</h2>
+          <div class="lt-sub">Every campaign, side by side</div>
+        </div>
+      </div>
+      <div class="glass panel p-2 sm:p-3 overflow-x-auto">
+        <table class="season-table">
+          <thead>
+            <tr>
+              <th>Season</th>
+              <th>M</th>
+              <th>Runs</th>
+              <th>Avg</th>
+              <th>SR</th>
+              <th>HS</th>
+              <th>Wkts</th>
+              <th>Econ</th>
+              <th>Best</th>
+            </tr>
+          </thead>
+          <tbody id="seasonTableBody"></tbody>
+        </table>
       </div>
     </section>
 
@@ -768,11 +1015,33 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
       </div>
     </section>
 
+    <!-- HEAD TO HEAD -->
     <section class="mt-10 io-hidden">
-      <div class="flex items-end justify-between">
+      <div class="lt mb-4">
+        <div class="lt-bar"></div>
         <div>
-          <h2 class="font-serif text-3xl text-white">Milestones</h2>
-          <p class="text-sm text-slate-400 mt-1">Notable performances</p>
+          <div class="lt-kicker"><i data-lucide="swords" class="w-3.5 h-3.5"></i>Match-up</div>
+          <h2 class="lt-title text-3xl sm:text-4xl">Head to head</h2>
+          <div class="lt-sub">Your record against any opponent</div>
+        </div>
+      </div>
+      <div class="glass panel--mint panel p-5 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-5">
+          <span class="text-[11px] uppercase tracking-[0.18em] text-slate-400 font-bold">Opponent</span>
+          <select id="h2hSelect" class="h2h-select"></select>
+          <span id="h2hMeta" class="text-sm text-slate-400 sm:ml-auto"></span>
+        </div>
+        <div id="h2hBody" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3"></div>
+      </div>
+    </section>
+
+    <section class="mt-10 io-hidden">
+      <div class="lt mb-1">
+        <div class="lt-bar"></div>
+        <div>
+          <div class="lt-kicker"><i data-lucide="medal" class="w-3.5 h-3.5"></i>Honours</div>
+          <h2 class="lt-title text-3xl sm:text-4xl">Milestones</h2>
+          <div class="lt-sub">Notable performances</div>
         </div>
       </div>
       <div id="milestonesGrid" class="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3"></div>
@@ -782,10 +1051,12 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
   <!-- BATTING -->
   <div data-tab-pane="batting" class="hidden">
     <section class="mt-8 io-hidden">
-      <div class="flex items-end justify-between mb-4">
+      <div class="lt mb-4">
+        <div class="lt-bar"></div>
         <div>
-          <h2 class="font-serif text-3xl sm:text-4xl text-white">Batting</h2>
-          <p class="text-sm text-slate-400 mt-1">Every metric, every milestone</p>
+          <div class="lt-kicker"><i data-lucide="circle-dot" class="w-3.5 h-3.5"></i>With the bat</div>
+          <h2 class="lt-title text-3xl sm:text-4xl">Batting</h2>
+          <div class="lt-sub">Every metric, every milestone</div>
         </div>
       </div>
       <div id="battingStatGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"></div>
@@ -861,8 +1132,14 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
   <!-- BOWLING -->
   <div data-tab-pane="bowling" class="hidden">
     <section class="mt-8 io-hidden">
-      <h2 class="font-serif text-3xl sm:text-4xl text-white">Bowling</h2>
-      <p class="text-sm text-slate-400 mt-1">Wickets, control and consistency</p>
+      <div class="lt mb-4">
+        <div class="lt-bar"></div>
+        <div>
+          <div class="lt-kicker" style="color:var(--bowl)"><i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>With the ball</div>
+          <h2 class="lt-title text-3xl sm:text-4xl">Bowling</h2>
+          <div class="lt-sub">Wickets, control and consistency</div>
+        </div>
+      </div>
       <div id="bowlingStatGrid" class="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"></div>
     </section>
 
@@ -919,9 +1196,13 @@ def build_dashboard_html(cricket_data: list, profile_img_src: str) -> str:
   <div data-tab-pane="matches" class="hidden">
     <section class="mt-8 io-hidden">
       <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
-        <div>
-          <h2 class="font-serif text-3xl sm:text-4xl text-white">Match log</h2>
-          <p class="text-sm text-slate-400 mt-1">Every game, every contribution</p>
+        <div class="lt">
+          <div class="lt-bar"></div>
+          <div>
+            <div class="lt-kicker"><i data-lucide="list" class="w-3.5 h-3.5"></i>Full record</div>
+            <h2 class="lt-title text-3xl sm:text-4xl">Match log</h2>
+            <div class="lt-sub">Every game, every contribution · tap a row to expand</div>
+          </div>
         </div>
         <div class="relative w-full sm:max-w-xs">
           <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
@@ -1119,6 +1400,8 @@ window.CRICKET_DATA = {data_json};
     tab:    'overview',
     matchSort: {{ key:'matchId', dir:'asc' }},
     matchSearch: '',
+    h2hOpp: null,
+    openRows: new Set(),
   }};
 
   function getFiltered() {{
@@ -1263,16 +1546,174 @@ window.CRICKET_DATA = {data_json};
 
     ribbon.innerHTML = '';
     if (!items.length) {{
-      ribbon.innerHTML = '<span class="text-xs text-slate-500 px-2">No achievements yet — keep playing.</span>';
+      ribbon.style.animation = 'none';
+      ribbon.innerHTML = '<span class="tk" style="padding-left:8px">No achievements yet — keep playing.</span>';
       return;
     }}
-    items.forEach(it => {{
-      const el = document.createElement('div');
-      el.className = 'achv';
-      el.innerHTML = `<span class="ico"><i data-lucide="${{it.icon}}" class="w-3 h-3"></i></span><span class="font-semibold">${{it.text}}</span>`;
-      ribbon.appendChild(el);
-    }});
+    // Duplicate the set so the -50% translate loop is seamless.
+    const tkHTML = it => `<span class="tk"><i data-lucide="${{it.icon}}" class="w-3.5 h-3.5"></i>${{it.text}}<span class="dot"></span></span>`;
+    const seq = items.map(tkHTML).join('');
+    ribbon.style.animation = '';
+    ribbon.innerHTML = seq + seq;
     if (window.lucide) lucide.createIcons();
+  }}
+
+  /* ============= PLAYER RATING (FIFA-style index) ============= */
+  function computeRating(bat, bowl, df) {{
+    // Normalise each facet to a 0–99 band off realistic club ceilings,
+    // then clamp. These are presentational, derived purely from existing stats.
+    const clamp = v => Math.max(35, Math.min(99, Math.round(v)));
+    const has = (n) => n != null && !isNaN(n);
+
+    // Batting index: average (·40 cap), strike rate, output volume.
+    const batScore = bat.innings
+      ? 0.50 * Math.min(100, (bat.average / 35) * 100)
+      + 0.30 * Math.min(100, (bat.sr / 130) * 100)
+      + 0.20 * Math.min(100, (bat.runs / 400) * 100)
+      : 0;
+
+    // Bowling index: economy (lower better), average (lower better), wickets.
+    const econScore = bowl.balls ? Math.max(0, 100 - ((bowl.economy - 3) / 6) * 100) : 0;
+    const avgScore  = bowl.wickets ? Math.max(0, 100 - ((bowl.average - 10) / 30) * 100) : 0;
+    const bowlScore = bowl.innings
+      ? 0.40 * Math.min(100, Math.max(0, econScore))
+      + 0.30 * Math.min(100, Math.max(0, avgScore))
+      + 0.30 * Math.min(100, (bowl.wickets / 40) * 100)
+      : 0;
+
+    // Fielding index: catches.
+    const fieldScore = Math.min(100, (bat.catches / 15) * 100);
+
+    const BAT = clamp(batScore * 0.65 + 30);
+    const BWL = clamp(bowlScore * 0.65 + 30);
+    const FLD = clamp(fieldScore * 0.6 + 38);
+
+    // Overall weights the two strong suits (rewards all-round balance).
+    const facets = [BAT, BWL, FLD].sort((a,b) => b-a);
+    const OVR = clamp(facets[0] * 0.5 + facets[1] * 0.35 + facets[2] * 0.15);
+
+    let tier = 'Prospect';
+    if (OVR >= 85) tier = 'Elite All-Rounder';
+    else if (OVR >= 75) tier = 'Star All-Rounder';
+    else if (OVR >= 65) tier = 'All-Rounder';
+    else if (BAT - BWL >= 12) tier = 'Specialist Batter';
+    else if (BWL - BAT >= 12) tier = 'Specialist Bowler';
+
+    return {{ OVR, BAT, BWL, FLD, tier }};
+  }}
+
+  function renderRatingCard(bat, bowl, df) {{
+    const r = computeRating(bat, bowl, df);
+    const ovrEl = $('#ovrValue');
+    if (ovrEl) animateCount(ovrEl, r.OVR, 0, 1100);
+    const tierEl = $('#ovrTier');
+    if (tierEl) tierEl.textContent = r.tier;
+
+    const bars = $('#ratingBars');
+    if (!bars) return;
+    const rows = [
+      {{ key:'BAT', label:'Batting',  val:r.BAT, icon:'circle-dot',
+         detail:`${{fmt(bat.runs)}} runs · avg ${{bat.average?fmt(bat.average,1):'—'}}` }},
+      {{ key:'BWL', label:'Bowling',  val:r.BWL, icon:'rotate-ccw',
+         detail:`${{fmt(bowl.wickets)}} wkts · econ ${{bowl.economy?fmt(bowl.economy,2):'—'}}` }},
+      {{ key:'FLD', label:'Fielding', val:r.FLD, icon:'hand',
+         detail:`${{fmt(bat.catches)}} catches` }},
+    ];
+    bars.innerHTML = rows.map(row => `
+      <div>
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs uppercase tracking-[0.12em] text-slate-300 font-bold inline-flex items-center gap-1.5">
+            <i data-lucide="${{row.icon}}" class="w-3.5 h-3.5"></i>${{row.label}}
+          </span>
+          <span class="num-display num text-2xl text-white">${{row.val}}</span>
+        </div>
+        <div class="rating-bar"><span style="width:0%" data-w="${{row.val}}"></span></div>
+        <div class="text-[11px] text-slate-500 mt-1.5">${{row.detail}}</div>
+      </div>
+    `).join('');
+    // Animate the bar fills after layout.
+    requestAnimationFrame(() => $$('#ratingBars .rating-bar > span').forEach(s => {{
+      s.style.width = (s.dataset.w || 0) + '%';
+    }}));
+    if (window.lucide) lucide.createIcons();
+  }}
+
+  /* ============= SEASON BY SEASON ============= */
+  function renderSeasonComparison(df) {{
+    const tbody = $('#seasonTableBody');
+    if (!tbody) return;
+    const yrs = [...new Set(df.map(r => r.Year).filter(v => v != null))].sort();
+    if (!yrs.length) {{
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#64748b;padding:18px">No seasons match the current filters.</td></tr>';
+      return;
+    }}
+    const maxRuns = Math.max(1, ...yrs.map(y => computeBatting(df.filter(r => r.Year === y)).runs));
+    tbody.innerHTML = '';
+    yrs.forEach(y => {{
+      const sub = df.filter(r => r.Year === y);
+      const b = computeBatting(sub);
+      const bo = computeBowling(sub);
+      const barW = Math.round((b.runs / maxRuns) * 46);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><span class="text-white">${{y}}</span><span class="yr-bar" style="width:${{barW}}px"></span></td>
+        <td class="num text-slate-300">${{sub.length}}</td>
+        <td class="num text-bat-400">${{fmt(b.runs)}}</td>
+        <td class="num text-slate-200">${{b.average ? fmt(b.average,1) : '—'}}</td>
+        <td class="num text-slate-200">${{b.sr ? fmt(b.sr,1) : '—'}}</td>
+        <td class="num text-slate-200">${{b.highestDisplay}}</td>
+        <td class="num text-bowl-400">${{fmt(bo.wickets)}}</td>
+        <td class="num text-slate-200">${{bo.economy ? fmt(bo.economy,2) : '—'}}</td>
+        <td class="num text-slate-200">${{bo.best}}</td>
+      `;
+      tbody.appendChild(tr);
+    }});
+  }}
+
+  /* ============= HEAD TO HEAD ============= */
+  function renderHeadToHead(df) {{
+    const sel = $('#h2hSelect');
+    const body = $('#h2hBody');
+    if (!sel || !body) return;
+
+    // Opponents present in the current filtered set, by matches played.
+    const oppCounts = {{}};
+    df.forEach(r => {{ if (r.Opponent) oppCounts[r.Opponent] = (oppCounts[r.Opponent]||0) + 1; }});
+    const opps = Object.keys(oppCounts).sort((a,b) => oppCounts[b]-oppCounts[a] || a.localeCompare(b));
+
+    if (!opps.length) {{
+      sel.innerHTML = '<option>No opponents</option>';
+      body.innerHTML = '<div class="empty col-span-full">No opponents match the current filters.</div>';
+      $('#h2hMeta').textContent = '';
+      return;
+    }}
+
+    // Preserve current selection if still valid, else default to most-played.
+    if (!state.h2hOpp || !oppCounts[state.h2hOpp]) state.h2hOpp = opps[0];
+    sel.innerHTML = opps.map(o =>
+      `<option value="${{o.replace(/"/g,'&quot;')}}"${{o===state.h2hOpp?' selected':''}}>${{o}} (${{oppCounts[o]}})</option>`
+    ).join('');
+
+    const sub = df.filter(r => r.Opponent === state.h2hOpp);
+    const b = computeBatting(sub);
+    const bo = computeBowling(sub);
+    $('#h2hMeta').textContent = `${{sub.length}} meeting${{sub.length===1?'':'s'}}`;
+
+    const cells = [
+      {{ k:'Matches', v: sub.length, c:'text-white', sz:'text-3xl' }},
+      {{ k:'Runs',    v: fmt(b.runs), c:'text-bat-400', sz:'text-3xl' }},
+      {{ k:'Avg',     v: b.average ? fmt(b.average,1) : '—', c:'text-slate-100', sz:'text-3xl' }},
+      {{ k:'HS',      v: b.highestDisplay, c:'text-slate-100', sz:'text-3xl' }},
+      {{ k:'Wkts',    v: fmt(bo.wickets), c:'text-bowl-400', sz:'text-3xl' }},
+      {{ k:'Econ',    v: bo.economy ? fmt(bo.economy,2) : '—', c:'text-slate-100', sz:'text-3xl' }},
+      {{ k:'Best',    v: bo.best, c:'text-slate-100', sz:'text-3xl' }},
+    ];
+    body.innerHTML = cells.map(c => `
+      <div class="vs-stat score-cell">
+        <div class="v ${{c.c}} ${{c.sz}}">${{c.v}}</div>
+        <div class="k">${{c.k}}</div>
+      </div>
+    `).join('');
   }}
 
   function renderTimeline(df) {{
@@ -1890,7 +2331,11 @@ window.CRICKET_DATA = {data_json};
       else if ((r.Wickets||0) >= 3) notes.push('<span class="badge badge-3w">3W</span>');
       if ((r.Catch||0) > 0) notes.push(`<span class="badge">+${{r.Catch}} ct</span>`);
 
+      const isOpen = state.openRows.has(r.matchId);
+
       const tr = document.createElement('tr');
+      tr.className = 'match-row' + (isOpen ? ' open' : '');
+      tr.dataset.mid = r.matchId;
       tr.innerHTML = `
         <td class="text-slate-500 num">${{r.matchId}}</td>
         <td class="num">${{r.Year||''}}</td>
@@ -1901,17 +2346,28 @@ window.CRICKET_DATA = {data_json};
         <td class="text-right">${{bowlCell}}</td>
         <td class="text-right space-x-1">${{notes.join(' ')||''}}</td>
       `;
+      tr.addEventListener('click', () => toggleRow(r.matchId));
       tbody.appendChild(tr);
 
+      if (isOpen) {{
+        const sc = document.createElement('tr');
+        sc.className = 'scorecard-row';
+        sc.innerHTML = `<td colspan="8">${{scorecardHTML(r)}}</td>`;
+        tbody.appendChild(sc);
+      }}
+
       const card = document.createElement('div');
-      card.className = 'p-4 hover:bg-white/[.02] transition';
+      card.className = 'p-4 hover:bg-white/[.02] transition cursor-pointer';
       card.innerHTML = `
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <div class="text-sm font-semibold truncate">vs ${{r.Opponent||'Unknown'}}</div>
             <div class="text-xs text-slate-400 mt-0.5">#${{r.matchId}} · ${{r.Year||''}} · ${{r.Match_Type||'—'}}</div>
           </div>
-          <div class="flex flex-col items-end gap-1">${{notes.join(' ')||''}}</div>
+          <div class="flex items-center gap-2">
+            <div class="flex flex-col items-end gap-1">${{notes.join(' ')||''}}</div>
+            <i data-lucide="chevron-down" class="w-4 h-4 text-slate-500 transition-transform" style="${{isOpen?'transform:rotate(180deg)':''}}"></i>
+          </div>
         </div>
         <div class="grid grid-cols-2 gap-3 mt-3 text-sm">
           <div class="rounded-lg border border-white/5 p-2.5">
@@ -1925,9 +2381,44 @@ window.CRICKET_DATA = {data_json};
             <div class="text-[11px] text-slate-500 mt-0.5">${{r.Maidens||0}} maidens</div>
           </div>
         </div>
+        <div class="card-expand" style="display:${{isOpen?'block':'none'}}">${{scorecardHTML(r)}}</div>
       `;
+      card.addEventListener('click', () => toggleRow(r.matchId));
       cardList.appendChild(card);
     }});
+
+    if (window.lucide) lucide.createIcons();
+  }}
+
+  // Per-match scorecard markup (used by the expandable match log).
+  function scorecardHTML(r) {{
+    const out = String(r.Out||'').toLowerCase() === 'yes';
+    const sr = (r.Runs != null && r.Balls) ? ((r.Runs/r.Balls)*100).toFixed(1) : '—';
+    const econ = r.Overs ? ((r.Runs_Conceded||0)/(oversToBalls(r.Overs)/6)).toFixed(2) : '—';
+    const boxes = [];
+    if (r.Runs != null) {{
+      boxes.push(`<div class="sc-box"><div class="l">Runs (Balls)</div><div class="v text-bat-400">${{r.Runs}}${{out?'':'<span class="text-bat-200">*</span>'}} <span class="text-slate-500" style="font-size:13px">(${{r.Balls||0}})</span></div></div>`);
+      boxes.push(`<div class="sc-box"><div class="l">Strike rate</div><div class="v text-slate-100">${{sr}}</div></div>`);
+      boxes.push(`<div class="sc-box"><div class="l">Boundaries</div><div class="v text-slate-100">${{r['4s']||0}}<span style="font-size:12px;color:#64748b">×4</span> ${{r['6s']||0}}<span style="font-size:12px;color:#64748b">×6</span></div></div>`);
+      boxes.push(`<div class="sc-box"><div class="l">Dismissal</div><div class="v text-slate-100" style="font-size:15px;line-height:1.2">${{out ? (r.Dismissal||'Out') : 'Not out'}}</div></div>`);
+    }}
+    if (r.Overs != null) {{
+      boxes.push(`<div class="sc-box"><div class="l">Figures</div><div class="v text-bowl-400">${{r.Wickets||0}}/${{r.Runs_Conceded||0}}</div></div>`);
+      boxes.push(`<div class="sc-box"><div class="l">Overs</div><div class="v text-slate-100">${{r.Overs}}</div></div>`);
+      boxes.push(`<div class="sc-box"><div class="l">Economy</div><div class="v text-slate-100">${{econ}}</div></div>`);
+      boxes.push(`<div class="sc-box"><div class="l">Maidens</div><div class="v text-slate-100">${{r.Maidens||0}}</div></div>`);
+    }}
+    boxes.push(`<div class="sc-box"><div class="l">Catches</div><div class="v text-mint-400">${{r.Catch||0}}</div></div>`);
+    return `<div class="scorecard">
+      <div class="text-[11px] uppercase tracking-[0.18em] text-slate-400 font-bold mb-3">Match #${{r.matchId}} · vs ${{r.Opponent||'Unknown'}} · ${{r.Match_Type||'—'}} · ${{r.Year||''}}</div>
+      <div class="sc-grid">${{boxes.join('')}}</div>
+    </div>`;
+  }}
+
+  function toggleRow(mid) {{
+    if (state.openRows.has(mid)) state.openRows.delete(mid);
+    else state.openRows.add(mid);
+    renderMatchesTab(getFiltered());
   }}
 
   function renderFilterDrawerUI() {{
@@ -2045,7 +2536,10 @@ window.CRICKET_DATA = {data_json};
 
     renderHero(df, bat, bowl);
     renderAchievements(bat, bowl, df);
+    renderRatingCard(bat, bowl, df);
     renderTimeline(df);
+    renderSeasonComparison(df);
+    renderHeadToHead(df);
     renderFormatGrid(df);
     renderOverviewMini(bat, bowl);
     renderMilestones(df, bat, bowl);
@@ -2266,6 +2760,11 @@ Best bowling: ${{bowl.best}} · 5W ${{bowl.fiveW}} · 3W ${{bowl.threeW}}`;
     $('#matchSearch').addEventListener('input', e => {{
       state.matchSearch = e.target.value;
       renderMatchesTab(getFiltered());
+    }});
+
+    $('#h2hSelect').addEventListener('change', e => {{
+      state.h2hOpp = e.target.value;
+      renderHeadToHead(getFiltered());
     }});
 
     $$('th.sortable').forEach(th => th.addEventListener('click', () => {{
